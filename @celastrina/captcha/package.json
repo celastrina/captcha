@@ -2,7 +2,7 @@
   "name": "@celastrina/timer",
   "version": "1.0.0",
   "description": "Timer Function Package for Celastrina",
-  "main": "Timer.js",
+  "main": "Captcha.js",
   "scripts": {
     "test": "mocha"
   },
