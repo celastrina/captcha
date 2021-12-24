@@ -15,7 +15,9 @@
     "Azure",
     "Function",
     "Celatrina",
-    "Timer"
+    "HTTP",
+    "CAPTCHA",
+    "RECAPTCHA"
   ],
   "author": "Robert R Murrell",
   "license": "MIT",
