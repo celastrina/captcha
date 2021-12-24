@@ -1,6 +1,6 @@
 {
   "name": "@celastrina/timer",
-  "version": "4.2.9",
+  "version": "1.0.0",
   "description": "Timer Function Package for Celastrina",
   "main": "Timer.js",
   "scripts": {
@@ -8,8 +8,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/celastrina/timer.git",
-    "directory": "@celastrina/timer"
+    "url": "git+https://github.com/celastrina/captcha.git",
+    "directory": "@celastrina/captcha"
   },
   "keywords": [
     "Azure",
@@ -20,9 +20,9 @@
   "author": "Robert R Murrell",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/celastrina/timer/issues"
+    "url": "https://github.com/celastrina/captcha/issues"
   },
-  "homepage": "https://github.com/celastrina/timer#readme",
+  "homepage": "https://github.com/celastrina/captcha#readme",
   "dependencies": {
     "@celastrina/core": "^4.12.37",
     "moment": "^2.29.1"
