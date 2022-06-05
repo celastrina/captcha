@@ -27,7 +27,7 @@ class GoogleReCaptchaMock {
 		this._action = action;
 	}
 	async start(foozled = false, version = "v2", v3ThresholdResponse = .8,
-	      responseCode = "1234567890", action = "mock") {
+	            responseCode = "1234567890", action = "mock") {
 		this._version = version;
 		this._responseCode = responseCode;
 		this._v3ThresholdResponse = v3ThresholdResponse;
@@ -43,7 +43,7 @@ class GoogleReCaptchaMock {
 				"error-codes": []
 			};
 			let _response = [200, _recaptcha];
-			let _body = config.data;
+			let _body = JSON.parse(config.data);
 			if(typeof _body === "undefined" || _body == null) {
 				_recaptcha["error-codes"].push("bad-request");
 			}

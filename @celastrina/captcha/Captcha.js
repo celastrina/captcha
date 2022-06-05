@@ -50,7 +50,8 @@ const axios = require("axios");
  * @abstract
  */
 class CaptchaAction {
-	/**@return{string}*/static get celastrinaType() {return "celastrinajs.captcha.CaptchaAction";}
+	/**@return{Object}*/static get $object() {return {schema: "https://celastrinajs/schema/v1.0.0/captcha/CaptchaAction#",
+		                                              type: "celastrinajs.captcha.CaptchaAction"};}
 	/**
 	 * @param {number} [timeout=getDefaultTimeout()]
 	 */
@@ -71,29 +72,30 @@ class CaptchaAction {
  * @author Robert R Murrell
  */
 class GoogleReCaptchaActionV2 extends CaptchaAction {
-	/**@return{string}*/static get celastrinaType() {return "celastrinajs.captcha.GoogleReCaptchaActionV2";}
+	/**@return{Object}*/static get $object() {return {schema: "https://celastrinajs/schema/v1.0.0/captcha/GoogleReCaptchaActionV2#",
+		                                              type: "celastrinajs.captcha.GoogleReCaptchaActionV2"};}
 	/**
 	 * @param {string} secret
 	 * @param {HTTPParameter} [parameter=new HeaderParameter()]
-	 * @param {string} [key="x-celastrinajs-captcha-token"]
+	 * @param {string} [name="x-celastrinajs-captcha-token"]
 	 * @param {number} [timeout=getDefaultTimeout()]
 	 * @param {string} [url="https://www.google.com/recaptcha/api/siteverify"]
 	 */
-	constructor(secret, parameter = new HeaderParameter(), key = "x-celastrinajs-captcha-token",
+	constructor(secret, parameter = new HeaderParameter(), name = "x-celastrinajs-captcha-token",
 	            timeout = getDefaultTimeout(), url = "https://www.google.com/recaptcha/api/siteverify") {
 		super(timeout);
 		if(typeof secret !== "string" || secret.trim().length === 0)
 			throw CelastrinaValidationError.newValidationError("Argument 'secret' is required.", "secret");
 		if(!instanceOfCelastrinaType(HTTPParameter, parameter))
 			throw CelastrinaValidationError.newValidationError("Argument 'parameter' is required and must be of type HTTPParameter.", "parameter");
-		if(typeof key !== "string" || key.trim().length === 0)
-			throw CelastrinaValidationError.newValidationError("Argument 'secret' is required.", "secret");
+		if(typeof name !== "string" || name.trim().length === 0)
+			throw CelastrinaValidationError.newValidationError("Argument 'name' is required.", "name");
 		if(typeof url !== "string" || url.trim().length === 0)
 			throw CelastrinaValidationError.newValidationError("Argument 'url' is required.", "url");
 		/**@type{string}*/this._url = url;
 		/**@type{string}*/this._secret = secret;
 		/**@type{HTTPParameter}*/this._parameter = parameter;
-		/**@type{string}*/this._key = key;
+		/**@type{string}*/this._name = name;
 	}
 	/**@return{string}*/get url() {return this._url;}
 	/**@param{string}url*/set url(url) {
@@ -134,20 +136,23 @@ class GoogleReCaptchaActionV2 extends CaptchaAction {
 	async isHuman(context) {
 		let _result = false;
 		try {
-			/**@type{string}*/let _token = await this._parameter.getParameter(context, this._key);
+			/**@type{string}*/let _token = await this._parameter.getParameter(context, this._name);
 			if(_token != null) {
 				/**@type{_reCAPTCHARequest}*/let _data = {
 					secret: this._secret,
 					response: _token
 				};
-				let _config = {timeout: this._timeout}
+				let _config = {
+					timeout: this._timeout,
+					headers: {"content-type": "application/json"}
+				}
 				/**@type{axios.AxiosResponse<_reCAPTCHAResponseV2>}*/let _response = await axios.post(this._url, _data,
 					_config);
 				if(_response.status === 200) _result = await this._handleResponse(context, _response.data);
 				else context.log("Invalid status code '" + _response.status + "' returned: " + _response.statusText,
 					LOG_LEVEL.ERROR, "GoogleReCaptchaActionV2.isHuman(context)");
 			}
-			else context.log("No token found for '" + this._key + "' using " + this._parameter.type + " parameter.",
+			else context.log("No token found for '" + this._name + "' using " + this._parameter.type + " parameter.",
 				LOG_LEVEL.WARN, "GoogleReCaptchaActionV2.isHuman(context)");
 			return _result;
 		}
@@ -166,23 +171,28 @@ class GoogleReCaptchaActionV2 extends CaptchaAction {
  * @author Robert R Murrell
  */
 class GoogleReCaptchaActionV3 extends GoogleReCaptchaActionV2 {
-	/**@return{string}*/static get celastrinaType() {return "celastrinajs.captcha.GoogleReCaptchaActionV3";}
+	/**@return{Object}*/static get $object() {return {schema: "https://celastrinajs/schema/v1.0.0/captcha/GoogleReCaptchaActionV3#",
+		                                              type: "celastrinajs.captcha.GoogleReCaptchaActionV3"};}
 	/**
 	 * @param {string} secret
 	 * @param {number} [score=.8]
 	 * @param {Array<string>} [actions=[]]
 	 * @param {HTTPParameter} [parameter=new HeaderParameter()]
-	 * @param {string} [key="x-celastrinajs-captcha-token"]
+	 * @param {string} [name="x-celastrinajs-captcha-token"]
 	 * @param {number} [timeout=getDefaultTimeout()]
 	 * @param {string} [url="https://www.google.com/recaptcha/api/siteverify"]
 	 */
 	constructor(secret, score = .8, actions = [], parameter = new HeaderParameter(),
-	            key = "x-celastrinajs-captcha-token", timeout = getDefaultTimeout(),
+	            name = "x-celastrinajs-captcha-token", timeout = getDefaultTimeout(),
 	            url = "https://www.google.com/recaptcha/api/siteverify") {
-		super(secret, parameter, key, timeout, url);
+		super(secret, parameter, name, timeout, url);
 		this._score = score;
 		this._actions = actions;
 	}
+	/**@returns{number}*/get score() {return this._score;}
+	/**@param{number}score*/set score(score) {this._score = score;}
+	/**@returns{Array<string>}*/get actions() {return this._actions;}
+	/**@param{Array<string>}actions*/set actions(actions) {this._actions = actions;}
 	/**
 	 * @param {string} action
 	 * @return {boolean}
@@ -203,7 +213,7 @@ class GoogleReCaptchaActionV3 extends GoogleReCaptchaActionV2 {
 				if(response.score >= this._score) _result = true;
 				else {
 					context.log("'" + context.subject.id + "' failed to meet or exceed the threshold of " + this._score +
-						" wit a score of " + response.score + ".", LOG_LEVEL.THREAT, "GoogleReCaptchaActionV3._handleResponse(context, response)");
+						" with a score of " + response.score + ".", LOG_LEVEL.THREAT, "GoogleReCaptchaActionV3._handleResponse(context, response)");
 				}
 			}
 			else context.log("'" + context.subject.id + "' specified an unsupported action '" + response.action + "'.",
@@ -219,12 +229,13 @@ class GoogleReCaptchaActionV3 extends GoogleReCaptchaActionV2 {
  * @author Robert R Murrell
  */
 class CaptchaAuthenticator extends Authenticator {
-	/**@return{string}*/static get celastrinaType() {return "celastrinajs.captcha.CaptchaAuthenticator";}
+	/**@return{Object}*/static get $object() {return {schema: "https://celastrinajs/schema/v1.0.0/captcha/CaptchaAuthenticator#",
+		                                              type: "celastrinajs.captcha.CaptchaAuthenticator"};}
 	constructor(captcha, assignments = ["human"]) {
 		super("CaptchaAuthenticator");
 		if(!instanceOfCelastrinaType(CaptchaAction, captcha))
 			throw new CelastrinaValidationError.newValidationError("Argument 'captcha' is required and must be an instance of '" +
-				                                                    CaptchaAction.celastrinaType + "'.", "captcha");
+				                                                    CaptchaAction.$object.type + "'.", "captcha");
 		/**@type{CaptchaAction}*/this._captcha = captcha;
 		/**@type{Array<string>}*/this._assignments = assignments;
 	}
@@ -260,9 +271,14 @@ class CaptchaAuthenticator extends Authenticator {
  * @author Robert R Murrell
  */
 class GoogleReCaptchaParser extends AttributeParser {
-	/**@return{string}*/static get celastrinaType() {return "celastrinajs.captcha.GoogleReCaptchaParser";}
-	constructor() {
-		super();
+	/**@return{Object}*/static get $object() {return {schema: "https://celastrinajs/schema/v1.0.0/captcha/GoogleReCaptchaParser#",
+		                                              type: "celastrinajs.captcha.GoogleReCaptchaParser"};}
+	/**
+	 * @param {AttributeParser} [link=null]
+	 * @param {string} [version="1.0.0"]
+	 */
+	constructor(link = null, version = "1.0.0") {
+		super("GoogleReCaptcha", link, version);
 	}
 	/**
 	 * @param _GoogleReCaptcha
@@ -282,7 +298,7 @@ class GoogleReCaptchaParser extends AttributeParser {
 		let _url = "https://www.google.com/recaptcha/api/siteverify";
 		let _timeout = getDefaultTimeout();
 		let _parameter = new HeaderParameter();
-		let _key = "x-celastrinajs-captcha-token";
+		let _name = "x-celastrinajs-captcha-token";
 		if(_GoogleReCaptcha.hasOwnProperty("url") && _GoogleReCaptcha.url === "string" &&
 				_GoogleReCaptcha.url.trim().length > 0)
 			_url = _GoogleReCaptcha.url;
@@ -294,12 +310,12 @@ class GoogleReCaptchaParser extends AttributeParser {
 					"Argument 'parameter' is required and must be of type HTTPParameter.", "_GoogleReCaptcha.parameter");
 			else _parameter = _GoogleReCaptcha.parameter;
 		}
-		if(_GoogleReCaptcha.hasOwnProperty("key")) {
-			if(!_GoogleReCaptcha.hasOwnProperty("key") || _GoogleReCaptcha.key !== "string" ||
-					_GoogleReCaptcha.key.trim().length === 0)
+		if(_GoogleReCaptcha.hasOwnProperty("name")) {
+			if(!_GoogleReCaptcha.hasOwnProperty("name") || _GoogleReCaptcha.name !== "string" ||
+					_GoogleReCaptcha.name.trim().length === 0)
 				throw CelastrinaValidationError.newValidationError(
-					"Argument 'key' is required.", "_GoogleReCaptcha.key");
-			else _key = _GoogleReCaptcha.key;
+					"Argument 'name' is required.", "_GoogleReCaptcha.name");
+			else _name = _GoogleReCaptcha.name;
 		}
 		if(_GoogleReCaptcha.version === "v3") {
 			if(!_GoogleReCaptcha.hasOwnProperty("score") || _GoogleReCaptcha.score !== "number")
@@ -314,10 +330,10 @@ class GoogleReCaptchaParser extends AttributeParser {
 						"Argument 'actions' must of type Array<string>.", "_GoogleReCaptcha.actions");
 				else _actions = _GoogleReCaptcha.actions;
 			}
-			return new GoogleReCaptchaActionV3(_secret, _score, _actions, _parameter, _key, _timeout, _url);
+			return new GoogleReCaptchaActionV3(_secret, _score, _actions, _parameter, _name, _timeout, _url);
 		}
 		else
-			return new GoogleReCaptchaActionV2(_secret, _parameter, _key, _timeout, _url);
+			return new GoogleReCaptchaActionV2(_secret, _parameter, _name, _timeout, _url);
 	}
 }
 /**
@@ -325,7 +341,8 @@ class GoogleReCaptchaParser extends AttributeParser {
  * @author Robert R Murrell
  */
 class CaptchaConfigParser extends ConfigParser {
-	/**@return{string}*/static get celastrinaType() {return "celastrinajs.captcha.CaptchaConfigParser";}
+	/**@return{Object}*/static get $object() {return {schema: "https://celastrinajs/schema/v1.0.0/captcha/CaptchaConfigParser#",
+		                                              type: "celastrinajs.captcha.CaptchaConfigParser"};}
 	/**
 	 * @param {ConfigParser} [link=null]
 	 * @param {string} [version="1.0.0"]
@@ -347,13 +364,14 @@ class CaptchaConfigParser extends ConfigParser {
  * @author Robert R Murrell
  */
 class CaptchaAddOn extends AddOn {
-	/**@return{string}*/static get celastrinaType() {return "celastrinajs.captcha.CaptchaAddOn";}
-	/**@return{string}*/static get addOnName() {return "celastrinajs.addon.captcha";}
+	/**@return{Object}*/static get $object() {return {schema: "https://celastrinajs/schema/v1.0.0/captcha/CaptchaAddOn#",
+		                                              type: "celastrinajs.captcha.CaptchaAddOn",
+	                                                  addOn: "celastrinajs.addon.captcha"};}
 	/**
 	 * @param {Array<string>} [dependencies=[]]
 	 * @param {Array<number>} [lifecycles=[]]
 	 */
-	constructor(dependencies = [HTTPAddOn.addOnName], lifecycles = []) {
+	constructor(dependencies = [HTTPAddOn.$object.addOn], lifecycles = []) {
 		super(dependencies, lifecycles);
 	}
 	/**

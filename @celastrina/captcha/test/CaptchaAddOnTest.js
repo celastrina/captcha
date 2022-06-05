@@ -22,20 +22,24 @@
  * SOFTWARE.
  */
 const assert = require("assert");
-const {CaptchaAddOn, CaptchaConfigParser, GoogleReCaptchaParser} = require("../Captcha");
+const {CaptchaAddOn, CaptchaConfigParser, GoogleReCaptchaParser, GoogleReCaptchaActionV2} = require("../Captcha");
 const {HTTPAddOn} = require("@celastrina/http");
+const {instanceOfCelastrinaType, AddOn} = require("@celastrina/core");
 
 describe("CaptchaAddOn", () => {
-	describe("AddOn Types", () => {
-		it("should have a stupid value", () => {
-			assert.strictEqual(CaptchaAddOn.celastrinaType, "celastrinajs.captcha.CaptchaAddOn", "Expected 'celastrinajs.captcha.CaptchaAddOn'.");
-			assert.strictEqual(CaptchaAddOn.addOnName, "celastrinajs.addon.captcha", "Expected 'celastrinajs.addon.captcha'.");
+	describe("Celastrina Instance Of", () => {
+		it("Is Instance of CaptchaAddOn", () => {
+			assert.strictEqual(instanceOfCelastrinaType(AddOn, new CaptchaAddOn()), true,
+				"Expected insta of CaptchaAddOn.");
+			assert.strictEqual(instanceOfCelastrinaType(CaptchaAddOn, new CaptchaAddOn()), true,
+				"Expected insta of CaptchaAddOn.");
+			assert.strictEqual(CaptchaAddOn.$object.addOn, "celastrinajs.addon.captcha", "Expected 'celastrinajs.addon.captcha'.");
 		});
 	});
 	describe("#constructor(dependencies, lifecycles)", () => {
 		it("Should depend on HTTPAddOn",  () => {
 			let _addon = new CaptchaAddOn();
-			assert.deepStrictEqual(_addon.dependancies, new Set([HTTPAddOn.addOnName]), "Expected tp depend on HTTPAddOn");
+			assert.deepStrictEqual(_addon.dependancies, new Set([HTTPAddOn.$object.addOn]), "Expected tp depend on HTTPAddOn");
 		});
 	});
 	describe("Parsers.", () => {

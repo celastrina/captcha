@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Google RECAPTCHA Test Harness</title>
+</head>
+<body>
+    <script src="https://www.google.com/recaptcha/api.js?render=6Lc670QgAAAAACRuVYmu7MkhUuC5Grp7s1l5IAF-"></script>
+    <script>
+        grecaptcha.ready(function() {
+            grecaptcha.execute('6Lc670QgAAAAACRuVYmu7MkhUuC5Grp7s1l5IAF-', {action: 'test'}).then(function(token) {
+                // Add your logic to submit to your backend server here.
+            });
+        });
+    </script>
+</body>
+</html>
