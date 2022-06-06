@@ -22,9 +22,11 @@
  * SOFTWARE.
  */
 const assert = require("assert");
-const {CaptchaAddOn, CaptchaConfigParser, GoogleReCaptchaParser, GoogleReCaptchaActionV2} = require("../Captcha");
+const {CaptchaAddOn, CaptchaConfigParser, CaptchaAction, GoogleReCaptchaParser, GoogleReCaptchaActionV2} = require("../Captcha");
 const {HTTPAddOn} = require("@celastrina/http");
-const {instanceOfCelastrinaType, AddOn} = require("@celastrina/core");
+const {instanceOfCelastrinaType, AddOn, Configuration, Sentry, getDefaultTimeout, CelastrinaError} = require("@celastrina/core");
+const {MockAzureFunctionContext} = require("./AzureFunctionContextMock");
+const {MockCaptchaAction} = require("./CaptchaAuthenticatorTest");
 
 describe("CaptchaAddOn", () => {
 	describe("Celastrina Instance Of", () => {
@@ -52,5 +54,26 @@ describe("CaptchaAddOn", () => {
 			assert.deepStrictEqual(_addon.getAttributeParser(), new GoogleReCaptchaParser(), "Expected GoogleReCaptchaParser.")
 		});
 	});
+	describe("#initialize(azcontext, config)", () => {
+		it("should initialize and set authenticator", async () => {
+			let _azcontext = new MockAzureFunctionContext();
+			let _config = new Configuration("CaptchaAddOnTest");
+			let _addon = new CaptchaAddOn();
 
+			await _config.initialize(_azcontext);
+			_addon.action = new MockCaptchaAction();
+			await _addon.initialize(_azcontext, _config._config);
+
+			/**@type{Sentry}*/let _sentry = _config.getValue(Configuration.CONFIG_SENTRY);
+
+			let _authenticator = _sentry.authenticator;
+			let _found = false;
+			do {
+				_found = (_authenticator.name === "CaptchaAuthenticator");
+				_authenticator = _authenticator._link;
+			}while(_authenticator != null && !_found);
+
+			assert.strictEqual(_found, true, "Expected CaptchaAuthenticator to be added.");
+		});
+	});
 });

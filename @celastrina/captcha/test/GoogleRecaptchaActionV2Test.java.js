@@ -98,11 +98,23 @@ describe("GoogleReCaptchaActionV2Test", () => {
 				assert.strictEqual(_captcha.timeout, 1000, "Expected 1000.");
 			});
 		});
+		describe("assumeHumanOnTimeout", () => {
+			it("Gets timeout", () => {
+				let _captcha = new GoogleReCaptchaActionV2("abcdefghijklmnop");
+				assert.strictEqual(_captcha.assumeHumanOnTimeout, true, "Expected true.");
+			});
+			it("Sets timeout", () => {
+				let _captcha = new GoogleReCaptchaActionV2("abcdefghijklmnop");
+				assert.strictEqual(_captcha.assumeHumanOnTimeout, true, "Expected true.");
+				_captcha.assumeHumanOnTimeout = false;
+				assert.strictEqual(_captcha.assumeHumanOnTimeout, false, "Expected false.");
+			});
+		});
 	});
 	describe("#isHuman(context)", () => {
 		it("Passes Human Verification", async () => {
 			let _mock = new MockGoogleReCaptcha();
-			await _mock.start()
+			await _mock.start();
 
 			let _captcha = new GoogleReCaptchaActionV2("ABCDEFGHIJKLMNOP");
 			let _azcontext = new MockAzureFunctionContext();
@@ -130,9 +142,66 @@ describe("GoogleReCaptchaActionV2Test", () => {
 		});
 		it("Fails Human Verification", async () => {
 			let _mock = new MockGoogleReCaptcha();
-			await _mock.start(true)
+			await _mock.start(true);
 
 			let _captcha = new GoogleReCaptchaActionV2("ABCDEFGHIJKLMNOP");
+			let _azcontext = new MockAzureFunctionContext();
+			let _config = new Configuration("GoogleReCaptchaActionV2Test");
+
+			// Set up the Azure Function Context.
+			_azcontext.req.method = "GET";
+			_azcontext.req.originalUrl = "https://www.celastrinajs.com";
+			_azcontext.req.headers["host"] = "https://www.celastrinajs.com";
+			_azcontext.req.headers["accept"] = "*/*";
+			_azcontext.req.headers["accept-encoding"] = "gzip, deflate, br";
+			_azcontext.req.headers["connection"] = "keep-alive";
+			_azcontext.req.headers["user-agent"] = "celastrina-test";
+			_azcontext.req.headers["x-celastrinajs-captcha-token"] = "1234567890";
+
+			await _config.initialize(_azcontext);
+
+			let _context = new MockHTTPContext(_config);
+			await _context.initialize();
+			_context.subject = new Subject("mock_subject_id");
+
+			assert.strictEqual(await _captcha.isHuman(_context), false, "Expected false.");
+
+			await _mock.stop();
+		});
+		it("Passes Human Verification with Timeout", async () => {
+			let _mock = new MockGoogleReCaptcha();
+			_mock.timeout = true;
+			await _mock.start();
+			let _captcha = new GoogleReCaptchaActionV2("ABCDEFGHIJKLMNOP");
+			let _azcontext = new MockAzureFunctionContext();
+			let _config = new Configuration("GoogleReCaptchaActionV2Test");
+
+			// Set up the Azure Function Context.
+			_azcontext.req.method = "GET";
+			_azcontext.req.originalUrl = "https://www.celastrinajs.com";
+			_azcontext.req.headers["host"] = "https://www.celastrinajs.com";
+			_azcontext.req.headers["accept"] = "*/*";
+			_azcontext.req.headers["accept-encoding"] = "gzip, deflate, br";
+			_azcontext.req.headers["connection"] = "keep-alive";
+			_azcontext.req.headers["user-agent"] = "celastrina-test";
+			_azcontext.req.headers["x-celastrinajs-captcha-token"] = "1234567890";
+
+			await _config.initialize(_azcontext);
+
+			let _context = new MockHTTPContext(_config);
+			await _context.initialize();
+			_context.subject = new Subject("mock_subject_id");
+
+			assert.strictEqual(await _captcha.isHuman(_context), true, "Expected true.");
+
+			await _mock.stop();
+		});
+		it("Fails Human Verification with Timeout", async () => {
+			let _mock = new MockGoogleReCaptcha();
+			_mock.timeout = true;
+			await _mock.start();
+			let _captcha = new GoogleReCaptchaActionV2("ABCDEFGHIJKLMNOP");
+			_captcha.assumeHumanOnTimeout = false;
 			let _azcontext = new MockAzureFunctionContext();
 			let _config = new Configuration("GoogleReCaptchaActionV2Test");
 

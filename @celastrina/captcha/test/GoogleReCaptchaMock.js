@@ -15,8 +15,8 @@ class GoogleReCaptchaMock {
 		this._v3ThresholdResponse = v3ThresholdResponse;
 		this._action = action;
 		this._secret = secret;
-
 		this.recaptchaReceived = false;
+		this.timeout = false;
 	}
 	reset(version = "v2", v3ThresholdResponse = .8, responseCode = "1234567890",
 	      action = "mock") {
@@ -34,7 +34,9 @@ class GoogleReCaptchaMock {
 		this._action = action;
 		this._mock =  new MockAdapter(axios);
 		let _this = this;
-		this._mock.onPost(this._url).reply((config) => {
+		if(this.timeout)
+			this._mock.onPost(this._url).timeout();
+		else this._mock.onPost(this._url).reply((config) => {
 			_this.recaptchaReceived = true;
 			let _recaptcha = {
 				success: false,

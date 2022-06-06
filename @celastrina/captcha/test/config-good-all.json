@@ -2,16 +2,18 @@
   "configurations": [
     {
       "$object": {"contentType": "application/vnd.celastrinajs.config+json;Captcha"},
-      "action": {
+      "captcha": {
         "$object": {"contentType": "application/vnd.celastrinajs.attribute+json;GoogleReCaptcha"},
         "version": "v3",
         "secret" : "some_secret_value",
         "url": "https://www.google.com/recaptcha/api/siteverify",
-        "timeout": "10",
+        "timeout": 10000,
         "parameter": {"$object": {"contentType": "application/vnd.celastrinajs.attribute+json;HTTPParameter"},
                       "parameter":  "header"},
-        "name": "x-celastrinajs-captcha-token"
-      }
+        "name": "x-celastrinajs-captcha-token",
+        "assumeHumanOnTimeout": true
+      },
+      "assignments": ["human"]
     }
   ]
 }

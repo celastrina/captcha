@@ -23,19 +23,20 @@
  */
 const assert = require("assert");
 const {CaptchaAction, CaptchaAuthenticator} = require("../Captcha");
-const {getDefaultTimeout} = require("@celastrina/core");
-
+const {getDefaultTimeout, Configuration, Subject, Assertion} = require("@celastrina/core");
+const {HTTPContext} = require("@celastrina/http");
+const {MockAzureFunctionContext} = require("./AzureFunctionContextMock");
 
 class MockCaptchaAction extends CaptchaAction {
-	constructor(timeout = getDefaultTimeout()) {
-		super(timeout);
+	constructor(passHumanCheck = false) {
+		super();
 		this.isHumanInvoked = false;
-		this.passHumanCheck = true;
+		this.passHumanCheck = passHumanCheck;
 	}
 
-	reset() {
+	reset(passHumanCheck = false) {
 		this.isHumanInvoked = false;
-		this.passHumanCheck = true;
+		this.passHumanCheck = passHumanCheck;
 	}
 	/**
 	 * @param {HTTPContext} context
@@ -81,11 +82,39 @@ describe("CaptchaAuthenticator", () => {
 		});
 	});
 	describe("Authentication", () => {
-		it("should pass and return true", () => {
-			//
+		it("should pass and return true", async () => {
+			let _mock = new MockCaptchaAction(true);
+			let _auth = new CaptchaAuthenticator(_mock);
+			let _azcontext = new MockAzureFunctionContext();
+			let _config = new Configuration("CaptchaAuthenticatorTest");
+
+			await _config.initialize(_azcontext);
+			let _context = new HTTPContext(_config);
+			await _context.initialize();
+			_context.subject = new Subject("mock_subject_id");
+			let _assertion = new Assertion(_context, _context.subject, _config.permissions);
+
+			await _auth.authenticate(_assertion);
+
+			assert.strictEqual(await _assertion.hasAffirmativeAssertion(), true, "Expected true.");
+			assert.deepStrictEqual(_assertion._assignments.has("human"), true, "Expected to have 'human' assignment.");
 		});
-		it("should fail and return false", () => {
-			//
+		it("should fail and return false", async () => {
+			let _mock = new MockCaptchaAction(false);
+			let _auth = new CaptchaAuthenticator(_mock);
+			let _azcontext = new MockAzureFunctionContext();
+			let _config = new Configuration("CaptchaAuthenticatorTest");
+
+			await _config.initialize(_azcontext);
+			let _context = new HTTPContext(_config);
+			await _context.initialize();
+			_context.subject = new Subject("mock_subject_id");
+			let _assertion = new Assertion(_context, _context.subject, _config.permissions);
+
+			await _auth.authenticate(_assertion);
+
+			assert.strictEqual(await _assertion.hasAffirmativeAssertion(), false, "Expected false.");
+			assert.deepStrictEqual(_assertion._assignments.has("human"), false, "Expected to not have 'human' assignments.");
 		});
 	});
 });
