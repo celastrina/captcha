@@ -25,6 +25,7 @@ const {AddOn, Authenticator, AttributeParser, ConfigParser, Configuration, insta
 	   CelastrinaValidationError, CelastrinaError, getDefaultTimeout, LOG_LEVEL} = require("@celastrina/core");
 const {HTTPAddOn, HTTPParameter, HeaderParameter} = require("@celastrina/http");
 const axios = require("axios");
+const FormData = require("form-data");
 "use strict";
 /**
  * @typedef _reCAPTCHARequest
@@ -152,16 +153,16 @@ class GoogleReCaptchaActionV2 extends CaptchaAction {
 		try {
 			/**@type{string}*/let _token = await this._parameter.getParameter(context, this._name);
 			if(_token != null) {
-				/**@type{_reCAPTCHARequest}*/let _data = {
-					secret: this._secret,
-					response: _token
-				};
 				let _config = {
+					params: {
+						secret: this._secret,
+						response: _token
+					},
 					timeout: this._timeout,
-					headers: {"content-type": "application/json"}
+					headers: {"content-type": "application/x-www-form-urlencoded"}
 				}
-				/**@type{axios.AxiosResponse<_reCAPTCHAResponseV2>}*/let _response = await axios.post(this._url, _data,
-					_config);
+				/**@type{axios.AxiosResponse<_reCAPTCHAResponseV2>}*/let _response = await axios.post(this._url,
+					null, _config);
 				if(_response.status === 200) _result = await this._handleResponse(context, _response.data);
 				else context.log("Invalid status code '" + _response.status + "' returned: " + _response.statusText,
 					LOG_LEVEL.ERROR, "GoogleReCaptchaActionV2.isHuman(context)");

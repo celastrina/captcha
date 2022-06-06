@@ -45,7 +45,7 @@ class GoogleReCaptchaMock {
 				"error-codes": []
 			};
 			let _response = [200, _recaptcha];
-			let _body = JSON.parse(config.data);
+			let _body = config.params;
 			if(typeof _body === "undefined" || _body == null) {
 				_recaptcha["error-codes"].push("bad-request");
 			}
