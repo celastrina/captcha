@@ -61,7 +61,7 @@ describe("CaptchaAddOn", () => {
 			let _addon = new CaptchaAddOn();
 
 			await _config.initialize(_azcontext);
-			_addon.action = new MockCaptchaAction();
+			_addon.captcha = new MockCaptchaAction();
 			await _addon.initialize(_azcontext, _config._config);
 
 			/**@type{Sentry}*/let _sentry = _config.getValue(Configuration.CONFIG_SENTRY);

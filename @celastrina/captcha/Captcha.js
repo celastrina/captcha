@@ -386,12 +386,28 @@ class CaptchaConfigParser extends ConfigParser {
 		super("Captcha", link, version);
 	}
 	/**
-	 * @param _Captcha
+	 * @param {*} _Captcha
 	 * @return {Promise<void>}
 	 * @private
 	 */
 	async _create(_Captcha) {
-		return Promise.resolve(undefined);
+		/**@type{CaptchaAddOn}*/let _addon = this._addons.get(CaptchaAddOn);
+		if(instanceOfCelastrinaType(CaptchaAddOn, _addon)) {
+			if(!_Captcha.hasOwnProperty("captcha") || !instanceOfCelastrinaType(CaptchaAction, _Captcha.captcha))
+				throw CelastrinaValidationError.newValidationError(
+					"Attribute 'captcha' is required. Please add a captcha of type CaptchaAction.", "_Captcha.captcha");
+			_addon.captcha = _Captcha.captcha;
+			let _assignments = ["human"];
+			if(_Captcha.hasOwnProperty("assignments")) {
+				if(!Array.isArray(_Captcha.assignments))
+					throw CelastrinaValidationError.newValidationError(
+						"Attribute 'assignments' must be an array of strings.", "_Captcha.assignments");
+				_assignments = _Captcha.assignments;
+			}
+			_addon.assignments = _assignments;
+		}
+		else
+			throw CelastrinaError.newError("Missing required Add-On '" + CaptchaAddOn.name + "'.");
 	}
 }
 /**
@@ -404,11 +420,11 @@ class CaptchaAddOn extends AddOn {
 	                                                  addOn: "celastrinajs.addon.captcha"};}
 	constructor() {
 		super([HTTPAddOn.$object.addOn], []);
-		/**@type{CaptchaAction}*/this._action = null;
+		/**@type{CaptchaAction}*/this._captcha = null;
 		this._assignments = ["human"];
 	}
-	/**@returns{CaptchaAction}*/get action() {return this._action;}
-	/**@param{CaptchaAction}action*/set action(action) {this._action = action;}
+	/**@returns{CaptchaAction}*/get captcha() {return this._captcha;}
+	/**@param{CaptchaAction}action*/set captcha(action) {this._captcha = action;}
 	/**@returns{Array<string>}*/get assignments() {return this._assignments;}
 	/**@param{Array<string>}assignments*/set assignments(assignments) {this._assignments = assignments;}
 	/**
@@ -429,7 +445,7 @@ class CaptchaAddOn extends AddOn {
 	 * @return {Promise<void>}
 	 */
 	async initialize(azcontext, config) {
-		let _captcha = new CaptchaAuthenticator(this._action, this._assignments);
+		let _captcha = new CaptchaAuthenticator(this._captcha, this._assignments);
 		/**@type{Sentry}*/let _sentry = config[Configuration.CONFIG_SENTRY];
 		_sentry.addAuthenticator(_captcha);
 	}
