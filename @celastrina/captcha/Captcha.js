@@ -25,7 +25,6 @@ const {AddOn, Authenticator, AttributeParser, ConfigParser, Configuration, insta
 	   CelastrinaValidationError, CelastrinaError, getDefaultTimeout, LOG_LEVEL} = require("@celastrina/core");
 const {HTTPAddOn, HTTPParameter, HeaderParameter} = require("@celastrina/http");
 const axios = require("axios");
-const FormData = require("form-data");
 "use strict";
 /**
  * @typedef _reCAPTCHARequest
@@ -62,11 +61,11 @@ class CaptchaAction {
 	/**@return{number}*/get timeout() {return this._timeout;}
 	/**@param{number}timeout*/set timeout(timeout) {this._timeout = getDefaultTimeout(timeout);}
 	/**
-	 * @param {HTTPContext} context
+	 * @param {Assertion} assertion
 	 * @return {Promise<boolean>}
 	 * @abstract
 	 */
-	async isHuman(context) {throw CelastrinaError.newError("Not Implemented.", 501);}
+	async isHuman(assertion) {throw CelastrinaError.newError("Not Implemented.", 501);}
 }
 /**
  * GoogleReCaptchaAction
@@ -124,34 +123,31 @@ class GoogleReCaptchaActionV2 extends CaptchaAction {
 	/**@return{string}*/get name() {return this._name;}
 	/**@param{string}name*/set name(name) {this._name = name;}
 	/**
-	 * @param {HTTPContext} context
+	 * @param {Assertion} assertion
 	 * @param {_reCAPTCHAResponseV2 | _reCAPTCHAResponseV3} response
 	 * @return {Promise<boolean>}
 	 */
-	async _handleResponse(context, response) {
-		let _isHuman = false;
-		if(response.hasOwnProperty("error-codes") && Array.isArray(response["error-codes"]) &&
+	async _handleResponse(assertion, response) {
+		let _isHuman = response.success;
+		if(!_isHuman) {
+			if(response.hasOwnProperty("error-codes") && Array.isArray(response["error-codes"]) &&
 				response["error-codes"].length > 0) {
-			context.log("'" + context.subject.id + "' failed V2 reCAPTCHA verification with error codes: " +
-				        response["error-codes"], LOG_LEVEL.ERROR,
-				"GoogleReCaptchaActionV2._handleResponse(context, response)");
+				assertion.context.log("'" + assertion.subject.id + "' failed V2 reCAPTCHA verification with error codes: " +
+					response["error-codes"], LOG_LEVEL.ERROR,
+					"GoogleReCaptchaActionV2._handleResponse(assertion, response)");
+			}
 		}
-		else if(!response.success) {
-			context.log("'" + context.subject.id + "' failed V2 reCAPTCHA verification.", LOG_LEVEL.THREAT,
-				 "GoogleReCaptchaActionV2._handleResponse(context, response)");
-		}
-		else _isHuman = true;
 		return _isHuman;
 	}
 	/**
-	 * @param {HTTPContext} context
+	 * @param {Assertion} assertion
 	 * @return {Promise<boolean>}
 	 * @private
 	 */
-	async isHuman(context) {
+	async isHuman(assertion) {
 		let _result = false;
 		try {
-			/**@type{string}*/let _token = await this._parameter.getParameter(context, this._name);
+			/**@type{string}*/let _token = await this._parameter.getParameter(/**@type{HTTPContext}*/assertion.context, this._name);
 			if(_token != null) {
 				let _config = {
 					params: {
@@ -163,27 +159,27 @@ class GoogleReCaptchaActionV2 extends CaptchaAction {
 				}
 				/**@type{axios.AxiosResponse<_reCAPTCHAResponseV2>}*/let _response = await axios.post(this._url,
 					null, _config);
-				if(_response.status === 200) _result = await this._handleResponse(context, _response.data);
-				else context.log("Invalid status code '" + _response.status + "' returned: " + _response.statusText,
-					LOG_LEVEL.ERROR, "GoogleReCaptchaActionV2.isHuman(context)");
+				if(_response.status === 200) _result = await this._handleResponse(assertion, _response.data);
+				else assertion.context.log("Invalid status code '" + _response.status + "' returned: " + _response.statusText,
+					LOG_LEVEL.ERROR, "GoogleReCaptchaActionV2.isHuman(assertion)");
 			}
-			else context.log("No token found for '" + this._name + "' using " + this._parameter.type + " parameter.",
-				LOG_LEVEL.WARN, "GoogleReCaptchaActionV2.isHuman(context)");
+			else assertion.context.log("No token found for '" + this._name + "' using " + this._parameter.type + " parameter.",
+				LOG_LEVEL.WARN, "GoogleReCaptchaActionV2.isHuman(assertion)");
 			return _result;
 		}
 		catch(/**@type{axios.AxiosError}*/exception) {
 			if(exception.isAxiosError) {
 				if(exception.code === GoogleReCaptchaActionV2.AXIOS_TIMEOUT_CODE) {
-					context.log("[" + context.subject.id + "] Request aborted, " + exception.message + ".", LOG_LEVEL.WARN,
-						 "GoogleReCaptchaActionV2.isHuman(context)");
-					context.log("Request timed out for subject '" + context.subject.id + "'. Assume human request '" +
+					assertion.context.log("[" + assertion.subject.id + "] Request aborted, " + exception.message + ".", LOG_LEVEL.WARN,
+						 "GoogleReCaptchaActionV2.isHuman(assertion)");
+					assertion.context.log("Request timed out for subject '" + assertion.subject.id + "'. Assume human request '" +
 						        this._assumeHumanOnTimeout + "'.", LOG_LEVEL.WARN,
-						 "GoogleReCaptchaActionV2.isHuman(context)");
+						 "GoogleReCaptchaActionV2.isHuman(assertion)");
 					return this._assumeHumanOnTimeout;
 				}
 				else if(exception.hasOwnProperty("response")) {
-					context.log("Invalid status code '" + exception.response.status + "' returned, expected 200: " +
-						exception.response.statusText, LOG_LEVEL.THREAT, "GoogleReCaptchaActionV2.isHuman(context)");
+					assertion.context.log("Invalid status code '" + exception.response.status + "' returned, expected 200: " +
+						exception.response.statusText, LOG_LEVEL.THREAT, "GoogleReCaptchaActionV2.isHuman(assertion)");
 					return false;
 				}
 			}
@@ -229,25 +225,25 @@ class GoogleReCaptchaActionV3 extends GoogleReCaptchaActionV2 {
 		return true;
 	}
 	/**
-	 * @param {HTTPContext} context
+	 * @param {Assertion} assertion
 	 * @param {_reCAPTCHAResponseV2 | _reCAPTCHAResponseV3} response
 	 * @return {Promise<boolean>}
 	 */
-	async _handleResponse(context, response) {
+	async _handleResponse(assertion, response) {
 		let _result = false;
-		if(await super._handleResponse(context, response)) {
+		if(await super._handleResponse(assertion, response)) {
 			if(this.isActionValid(response.action)) {
 				if(response.score >= this._score) _result = true;
 				else {
-					context.log("'" + context.subject.id + "' failed to meet or exceed the threshold of " + this._score +
-						" with a score of " + response.score + ".", LOG_LEVEL.THREAT, "GoogleReCaptchaActionV3._handleResponse(context, response)");
+					assertion.context.log("'" + assertion.subject.id + "' failed to meet or exceed the threshold of " + this._score +
+						" with a score of " + response.score + ".", LOG_LEVEL.THREAT, "GoogleReCaptchaActionV3._handleResponse(assertion, response)");
 				}
 			}
-			else context.log("'" + context.subject.id + "' specified an unsupported action '" + response.action + "'.",
-				LOG_LEVEL.THREAT, "GoogleReCaptchaActionV3._handleResponse(context, response)");
+			else assertion.context.log("'" + assertion.subject.id + "' specified an unsupported action '" + response.action + "'.",
+				LOG_LEVEL.THREAT, "GoogleReCaptchaActionV3._handleResponse(assertion, response)");
 		}
-		else context.log("'" + context.subject.id + "' has an invalid token response, unable to complete V3 verification.", LOG_LEVEL.THREAT,
-			"GoogleReCaptchaActionV3._handleResponse(context, response)");
+		else assertion.context.log("'" + assertion.subject.id + "' has an invalid token response, unable to complete V3 verification.", LOG_LEVEL.THREAT,
+			"GoogleReCaptchaActionV3._handleResponse(assertion, response)");
 		return _result;
 	}
 }
@@ -275,7 +271,7 @@ class CaptchaAuthenticator extends Authenticator {
 	 */
 	async _authenticate(assertion) {
 		try {
-			let _human = await this._captcha.isHuman(/**@type{HTTPContext}*/assertion.context);
+			let _human = await this._captcha.isHuman(/**@type{Assertion}*/assertion);
 			if(_human) assertion.assert(this._name, true, this._assignments);
 			else {
 				assertion.context.log(

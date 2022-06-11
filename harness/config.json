@@ -1,0 +1,44 @@
+{
+  "configurations": [
+    {
+      "$object": {"contentType": "application/vnd.celastrinajs.config+json;Core"},
+      "properties": {
+        "cache": {"ttl": 10, "unit": "minutes"}
+      },
+      "resources": {
+        "identity": {
+          "mappings": [
+            {"$object": {"contentType": "application/vnd.celastrinajs.attribute+json;PrincipalMapping"},
+              "principal":  "1cf25567-4c34-4174-8316-5393e0fe303f", "resource":  "https://vault.azure.net"},
+            {"$object": {"contentType": "application/vnd.celastrinajs.attribute+json;PrincipalMapping"},
+              "principal":  "1cf25567-4c34-4174-8316-5393e0fe303f", "resource":  "https://celastrinajs-demo-csmdb.documents.azure.com"}
+          ]
+        }
+      },
+      "authentication": {
+        "optimistic": false,
+        "permissions": [
+          {"$object": {"contentType": "application/vnd.celastrinajs.attribute+json;Permission"},
+            "action": "post",
+            "roles": [
+              "human"
+            ],
+            "match": {"type": "MatchAny"}}
+        ]
+      }
+    },
+    {
+      "$object": {"contentType": "application/vnd.celastrinajs.config+json;Captcha"},
+      "captcha": {
+        "$object": {"contentType": "application/vnd.celastrinajs.attribute+json;GoogleReCaptcha"},
+        "version": "v3",
+        "secret" : {
+          "$object": {"contentType": "application/vnd.celastrinajs.attribute+json;Property"},
+          "key": "celastrinajs-demo-recaptcha-sitesecret",
+          "type": "string"
+        }
+      },
+      "assignments": ["human"]
+    }
+  ]
+}

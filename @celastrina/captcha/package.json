@@ -1,7 +1,7 @@
 {
   "name": "@celastrina/captcha",
-  "version": "1.0.0",
-  "description": "Timer Function Package for Celastrina",
+  "version": "1.0.2",
+  "description": "Captcha Functions for Celastrina HTTP Add-On.",
   "main": "Captcha.js",
   "scripts": {
     "test": "mocha"
@@ -29,7 +29,6 @@
     "@celastrina/core": "^4.14.40",
     "@celastrina/http": "^4.8.19",
     "axios": "^0.27.2",
-    "form-data": "^4.0.0",
     "moment": "^2.29.3"
   },
   "devDependencies": {

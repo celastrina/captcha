@@ -23,7 +23,7 @@
  */
 const assert = require("assert");
 const {HeaderParameter, QueryParameter} = require("@celastrina/http");
-const {instanceOfCelastrinaType, Configuration, Subject} = require("@celastrina/core");
+const {instanceOfCelastrinaType, Configuration, Assertion, Subject} = require("@celastrina/core");
 const {GoogleReCaptchaActionV2} = require("../Captcha");
 const {MockGoogleReCaptcha} = require("./GoogleReCaptchaMock");
 const {MockAzureFunctionContext} = require("./AzureFunctionContextMock");
@@ -134,9 +134,9 @@ describe("GoogleReCaptchaActionV2Test", () => {
 
 			let _context = new MockHTTPContext(_config);
 			await _context.initialize();
-			_context.subject = new Subject("mock_subject_id");
+			let _assertion = new Assertion(_context, new Subject("mock_subject_id"), _config.permissions);
 
-			assert.strictEqual(await _captcha.isHuman(_context), true, "Expected true.");
+			assert.strictEqual(await _captcha.isHuman(_assertion), true, "Expected true.");
 
 			await _mock.stop();
 		});
@@ -162,9 +162,9 @@ describe("GoogleReCaptchaActionV2Test", () => {
 
 			let _context = new MockHTTPContext(_config);
 			await _context.initialize();
-			_context.subject = new Subject("mock_subject_id");
+			let _assertion = new Assertion(_context, new Subject("mock_subject_id"), _config.permissions);
 
-			assert.strictEqual(await _captcha.isHuman(_context), false, "Expected false.");
+			assert.strictEqual(await _captcha.isHuman(_assertion), false, "Expected false.");
 
 			await _mock.stop();
 		});
@@ -190,9 +190,9 @@ describe("GoogleReCaptchaActionV2Test", () => {
 
 			let _context = new MockHTTPContext(_config);
 			await _context.initialize();
-			_context.subject = new Subject("mock_subject_id");
+			let _assertion = new Assertion(_context, new Subject("mock_subject_id"), _config.permissions);
 
-			assert.strictEqual(await _captcha.isHuman(_context), true, "Expected true.");
+			assert.strictEqual(await _captcha.isHuman(_assertion), true, "Expected true.");
 
 			await _mock.stop();
 		});
@@ -219,9 +219,9 @@ describe("GoogleReCaptchaActionV2Test", () => {
 
 			let _context = new MockHTTPContext(_config);
 			await _context.initialize();
-			_context.subject = new Subject("mock_subject_id");
+			let _assertion = new Assertion(_context, new Subject("mock_subject_id"), _config.permissions);
 
-			assert.strictEqual(await _captcha.isHuman(_context), false, "Expected false.");
+			assert.strictEqual(await _captcha.isHuman(_assertion), false, "Expected false.");
 
 			await _mock.stop();
 		});

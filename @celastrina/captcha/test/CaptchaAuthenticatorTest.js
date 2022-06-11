@@ -23,7 +23,7 @@
  */
 const assert = require("assert");
 const {CaptchaAction, CaptchaAuthenticator} = require("../Captcha");
-const {getDefaultTimeout, Configuration, Subject, Assertion} = require("@celastrina/core");
+const {Configuration, Subject, Assertion} = require("@celastrina/core");
 const {HTTPContext} = require("@celastrina/http");
 const {MockAzureFunctionContext} = require("./AzureFunctionContextMock");
 

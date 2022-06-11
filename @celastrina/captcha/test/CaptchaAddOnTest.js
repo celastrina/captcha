@@ -22,9 +22,9 @@
  * SOFTWARE.
  */
 const assert = require("assert");
-const {CaptchaAddOn, CaptchaConfigParser, CaptchaAction, GoogleReCaptchaParser, GoogleReCaptchaActionV2} = require("../Captcha");
+const {CaptchaAddOn, CaptchaConfigParser, GoogleReCaptchaParser} = require("../Captcha");
 const {HTTPAddOn} = require("@celastrina/http");
-const {instanceOfCelastrinaType, AddOn, Configuration, Sentry, getDefaultTimeout, CelastrinaError} = require("@celastrina/core");
+const {instanceOfCelastrinaType, AddOn, Configuration, Sentry} = require("@celastrina/core");
 const {MockAzureFunctionContext} = require("./AzureFunctionContextMock");
 const {MockCaptchaAction} = require("./CaptchaAuthenticatorTest");
 
