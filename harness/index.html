@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Google RECAPTCHA Test Harness</title>
+</head>
+<body>
+<script src="https://www.google.com/recaptcha/api.js?render=6Lc670QgAAAAACRuVYmu7MkhUuC5Grp7s1l5IAF-"></script>
+<script>
+	grecaptcha.ready(function() {
+		grecaptcha.execute('6Lc670QgAAAAACRuVYmu7MkhUuC5Grp7s1l5IAF-', {action: 'test'}).then(function(token) {
+			document.getElementById('txtTokenValue').value = token;
+		});
+	});
+</script>
+<div>
+    <p><textarea id="txtTokenValue">Loading token from Google... Please Stand By...</textarea></p>
+    <p><button id="btnTestReCaptcha" onclick="testCaptchaPlugin(document.getElementById('txtTokenValue').value)">Test</button></p>
+    <p><textarea id="txtXHRResults">...Push Test to start...</textarea><br /></p>
+</div>
+<script>
+	let _xhr = new XMLHttpRequest();
+	_xhr.onload = (lxhr, lpenv) => {
+		if(lxhr.status >= 200 && lxhr.status < 300) {
+			const response = JSON.parse(lxhr.responseText);
+			document.getElementById('txtXHRResults').value = "OK";
+		}
+	};
+	_xhr.onerror = (lxhr, lpenv) => {
+		document.getElementById('txtXHRResults').value = "THERE WAS A HUGE PROBLEM.";
+	};
+
+	function testCaptchaPlugin(token) {
+		_xhr.open("POST", "https://celastrinajsweb.z13.web.core.windows.net");
+		_xhr.setRequestHeader('x-celastrinajs-captcha-token', document.getElementById('txtTokenValue').value);
+		_xhr.setRequestHeader('Content-Type', 'application/json');
+		_xhr.send(JSON.stringify({id: "991e7894-0b20-44dc-854a-89e04d9e64d2",
+			                      partition: "991e7894-0b20-44dc-854a-89e04d9e64d2"}));
+	}
+</script>
+</body>
+</html>
