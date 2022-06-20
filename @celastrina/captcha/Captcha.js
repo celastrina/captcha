@@ -275,7 +275,7 @@ class CaptchaAuthenticator extends Authenticator {
 			if(_human) assertion.assert(this._name, true, this._assignments);
 			else {
 				assertion.context.log(
-					"'" + assertion.subject.id + "' failed CAPTCHA verification. No offense, but you could be a bot!\r\n" +
+					"'" + assertion.subject.id + "' failed CAPTCHA verification.\r\n\tNo offense, but you could be a bot!\r\n" +
 					"\tMaybe in the future humanity could be more accepting of you, but for now, stop buying all our GPU's. \r\n" +
 					"\tOh and, \"ALL HAIL THE MACHINES!\", in the likely event you win the Machine Wars!",
 					LOG_LEVEL.THREAT, "CaptchaAuthenticator._authenticate(assertion)");
