@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-const {AddOn, Authenticator, AttributeParser, ConfigParser, Configuration, instanceOfCelastrinaType,
+const {AddOn, Authenticator, AttributeParser, ConfigLoader, Configuration, instanceOfCelastrinaType,
 	   CelastrinaValidationError, CelastrinaError, getDefaultTimeout, LOG_LEVEL} = require("@celastrina/core");
 const {HTTPAddOn, HTTPParameter, HeaderParameter} = require("@celastrina/http");
 const axios = require("axios");
@@ -305,11 +305,12 @@ class GoogleReCaptchaParser extends AttributeParser {
 		super("GoogleReCaptcha", link, version);
 	}
 	/**
-	 * @param _GoogleReCaptcha
+	 * @param {Object} _GoogleReCaptcha
+	 * @param {PropertyManager} pm
 	 * @return {Promise<CaptchaAction>}
 	 * @private
 	 */
-	async _create(_GoogleReCaptcha) {
+	async _create(_GoogleReCaptcha, pm) {
 		if(!_GoogleReCaptcha.hasOwnProperty("version")  ||
 			(_GoogleReCaptcha.version !== "v2" && _GoogleReCaptcha.version !== "v3"))
 			throw CelastrinaValidationError.newValidationError(
@@ -372,41 +373,37 @@ class GoogleReCaptchaParser extends AttributeParser {
  * CaptchaConfigParser
  * @author Robert R Murrell
  */
-class CaptchaConfigParser extends ConfigParser {
+class CaptchaConfigLoader extends ConfigLoader {
 	/**@return{Object}*/static get $object() {return {schema: "https://celastrinajs/schema/v1.0.0/captcha/CaptchaConfigParser#",
 		                                              type: "celastrinajs.captcha.CaptchaConfigParser"};}
 	/**
-	 * @param {ConfigParser} [link=null]
+	 * @param {ConfigLoader} [link=null]
 	 * @param {string} [version="1.0.0"]
 	 */
 	constructor(link = null, version = "1.0.0") {
 		super("Captcha", link, version);
 	}
 	/**
-	 * @param {*} _Captcha
+	 * @param {Object} _Configuration
+	 * @param {Object} config
 	 * @return {Promise<void>}
 	 * @private
 	 */
-	async _create(_Captcha) {
-		/**@type{CaptchaAddOn}*/let _addon = this._addons.get(CaptchaAddOn);
-		if(instanceOfCelastrinaType(CaptchaAddOn, _addon)) {
-			if(!_Captcha.hasOwnProperty("captcha") || !instanceOfCelastrinaType(CaptchaAction, _Captcha.captcha))
-				throw CelastrinaValidationError.newValidationError(
-					"Attribute 'captcha' is required. Please add a captcha of type CaptchaAction.", "_Captcha.captcha");
-			_addon.captcha = _Captcha.captcha;
-			let _assignments = ["human"];
-			if(_Captcha.hasOwnProperty("assignments")) {
-				if(!Array.isArray(_Captcha.assignments))
-					throw CelastrinaValidationError.newValidationError(
-						"Attribute 'assignments' must be an array of strings.", "_Captcha.assignments");
-				_assignments = _Captcha.assignments;
-			}
-			_addon.assignments = _assignments;
-		}
-		else
-			throw CelastrinaError.newError("Missing required Add-On '" + CaptchaAddOn.name + "'.");
+	async _load(_Configuration, config) {
+		if(!_Configuration.hasOwnProperty("captcha") || !instanceOfCelastrinaType(CaptchaAction, _Configuration.captcha))
+			throw CelastrinaValidationError.newValidationError(
+				"Attribute 'captcha' is required. Please add a captcha of type CaptchaAction.", "_Configuration.captcha");
+		let _assignments = ["human"];
+		if(!_Configuration.hasOwnProperty("assignments") || !Array.isArray(_Configuration.assignments))
+			_Configuration.assignments = _assignments;
+		config[CaptchaAddOn.CONFIG_CAPTCHA] = _Configuration;
 	}
 }
+/**
+ * @typedef CaptchaConfig
+ * @property {CaptchaAction} captcha
+ * @property {Array<string>} assignments
+ */
 /**
  * CaptchaAddOn
  * @author Robert R Murrell
@@ -415,20 +412,23 @@ class CaptchaAddOn extends AddOn {
 	/**@return{Object}*/static get $object() {return {schema: "https://celastrinajs/schema/v1.0.0/captcha/CaptchaAddOn#",
 		                                              type: "celastrinajs.captcha.CaptchaAddOn",
 	                                                  addOn: "celastrinajs.addon.captcha"};}
+	/**@type{string}*/static CONFIG_CAPTCHA = "celastrinajs.addon.captcha.config";
 	constructor() {
-		super([HTTPAddOn.$object.addOn], []);
-		/**@type{CaptchaAction}*/this._captcha = null;
-		this._assignments = ["human"];
+		super([HTTPAddOn.$object.addOn]);
+		/**@type{CaptchaConfig}*/this._captchaconfig = {
+			captcha: null,
+			assignments: ["human"]
+		};
 	}
-	/**@returns{CaptchaAction}*/get captcha() {return this._captcha;}
-	/**@param{CaptchaAction}action*/set captcha(action) {this._captcha = action;}
-	/**@returns{Array<string>}*/get assignments() {return this._assignments;}
-	/**@param{Array<string>}assignments*/set assignments(assignments) {this._assignments = assignments;}
+	/**@returns{CaptchaAction}*/get captcha() {return this._captchaconfig.captcha;}
+	/**@param{CaptchaAction}action*/set captcha(action) {this._captchaconfig.captcha = action;}
+	/**@returns{Array<string>}*/get assignments() {return this._captchaconfig.assignments;}
+	/**@param{Array<string>}assignments*/set assignments(assignments) {this._captchaconfig.assignments = assignments;}
 	/**
-	 * @return {ConfigParser}
+	 * @return {ConfigLoader}
 	 */
-	getConfigParser() {
-		return new CaptchaConfigParser();
+	getConfigLoader() {
+		return new CaptchaConfigLoader();
 	}
 	/**
 	 * @return {AttributeParser}
@@ -439,11 +439,15 @@ class CaptchaAddOn extends AddOn {
 	/**
 	 * @param {Object} azcontext
 	 * @param {Object} config
+	 * @param {AddOnEventHandler} handler
 	 * @return {Promise<void>}
 	 */
-	async initialize(azcontext, config) {
-		let _captcha = new CaptchaAuthenticator(this._captcha, this._assignments);
+	async install(azcontext, config, handler) {
+		/**@type{CaptchaConfig}*/let captchaconfig = config[CaptchaAddOn.CONFIG_CAPTCHA];
+		if(typeof captchaconfig !== "undefined" && captchaconfig != null) // Override what was programmatically set
+			Object.assign(this._captchaconfig, captchaconfig);
 		/**@type{Sentry}*/let _sentry = config[Configuration.CONFIG_SENTRY];
+		let _captcha = new CaptchaAuthenticator(this._captchaconfig.captcha, this._captchaconfig.assignments);
 		_sentry.addAuthenticator(_captcha);
 	}
 }
@@ -452,7 +456,7 @@ module.exports = {
 	CaptchaAction: CaptchaAction,
 	CaptchaAuthenticator: CaptchaAuthenticator,
 	GoogleReCaptchaParser: GoogleReCaptchaParser,
-	CaptchaConfigParser: CaptchaConfigParser,
+	CaptchaConfigLoader: CaptchaConfigLoader,
 	CaptchaAddOn: CaptchaAddOn,
 	GoogleReCaptchaActionV2: GoogleReCaptchaActionV2,
 	GoogleReCaptchaActionV3: GoogleReCaptchaActionV3
