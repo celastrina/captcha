@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 const assert = require("assert");
-const {CaptchaAddOn, CaptchaConfigParser, GoogleReCaptchaParser} = require("../Captcha");
+const {CaptchaAddOn, CaptchaConfigLoader, GoogleReCaptchaParser} = require("../Captcha");
 const {HTTPAddOn} = require("@celastrina/http");
 const {instanceOfCelastrinaType, AddOn, Configuration, Sentry} = require("@celastrina/core");
 const {MockAzureFunctionContext} = require("./AzureFunctionContextMock");
@@ -47,7 +47,7 @@ describe("CaptchaAddOn", () => {
 	describe("Parsers.", () => {
 		it("Should use Captcha Config Parser", () => {
 			let _addon = new CaptchaAddOn();
-			assert.deepStrictEqual(_addon.getConfigParser(), new CaptchaConfigParser(), "Expected CaptchaConfigParser.")
+			assert.deepStrictEqual(_addon.getConfigLoader(), new CaptchaConfigLoader(), "Expected CaptchaConfigParser.")
 		});
 		it("Should use Google Attribute Parser", () => {
 			let _addon = new CaptchaAddOn();
@@ -62,7 +62,7 @@ describe("CaptchaAddOn", () => {
 
 			await _config.initialize(_azcontext);
 			_addon.captcha = new MockCaptchaAction();
-			await _addon.initialize(_azcontext, _config._config);
+			await _addon.install(_azcontext, _config._config, null);
 
 			/**@type{Sentry}*/let _sentry = _config.getValue(Configuration.CONFIG_SENTRY);
 
