@@ -1,6 +1,6 @@
 {
   "name": "@celastrina/captcha",
-  "version": "1.0.6",
+  "version": "1.0.8",
   "description": "Captcha Functions for Celastrina HTTP Add-On.",
   "main": "Captcha.js",
   "scripts": {
@@ -26,8 +26,8 @@
   },
   "homepage": "https://github.com/celastrina/captcha#readme",
   "dependencies": {
-    "@celastrina/core": "^4.17.43",
-    "@celastrina/http": "^4.9.22",
+    "@celastrina/core": "^4.17.45",
+    "@celastrina/http": "^4.9.24",
     "axios": "^0.27.2",
     "moment": "^2.29.3"
   },
