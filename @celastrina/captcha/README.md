@@ -21,7 +21,7 @@ class MyFirstFunction extends JSONHTTPFunction {
         super(config);
     } 
 
-    async _get(context) {
+    async get(context) {
         context.log(“This can only be reached by a human!”, LOG_LEVEL.INFO, “MyFirstFunction._get(context)”);
         context.send({name: “sample”, message: "Welcome human person."}); // Return whatever object you’d like
     }
@@ -45,7 +45,7 @@ The above code secures the HTTP GET method for this function with a role named "
 role assigned by the CaptchaAddOn. The GoogleReCaptchaActionV3 defaults to an acceptability score of .8 or better and 
 defaults to no google actions. All the attributes are configurable to meet your needs.
 
-**WARNING**: The code example above has a secret IN CODE, please do not do this. Either load from a secure App Setting 
+**WARNING**: The code example above has a secret in code/configuration, please do not do this. Either load from a secure App Setting 
 or preferably use core JSON configuration and Azure Key Vault.
 
 ## Using JSON Configuration
