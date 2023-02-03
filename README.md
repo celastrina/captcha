@@ -12,12 +12,5 @@ will continue to adapt and grow with the Microsoft Azure ecosystem.
 - [@celastrina/http](https://www.npmjs.com/package/@celastrina/http): For use with Azure Function HTTP triggers.
 - [@celastrina/timer](https://www.npmjs.com/package/@celastrina/timer): For user with Azure Function Timer triggers.
 
-## Coming Soon
-The project team is currently working on add-ons for:
-- Google RECAPTCHA.
-- Cloud Events, both HTTP and or async triggers from EventGrid or Storage Queue.
-- Async Messages from Service Bus or Storage Queue.
-- Semaphore and Data Binding
-
 ## Documentation and More
 Please visit [celastrinajs.com](https://celastrinajs.com) for documentation and examples.
