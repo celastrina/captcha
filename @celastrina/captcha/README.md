@@ -61,7 +61,7 @@ or preferably use core JSON configuration and Azure Key Vault.
       "$object": {"contentType": "application/vnd.celastrinajs.config+json;Captcha"},
       "captcha": {
         "$object": {"contentType": "application/vnd.celastrinajs.attribute+json;GoogleReCaptcha"},
-        "version": "v3",
+        "version": "v2",
         "secret" : "some_secret_value",
         "url": "https://www.google.com/recaptcha/api/siteverify",
         "timeout": 5000,
